@@ -1,7 +1,8 @@
 
+from typing import Iterable
 
 
-def evaluate_f1(output, known_set) -> float:
+def evaluate_f1(output: Iterable[str], known_set: Iterable[str]) -> float:
     """ generates f1 score for a single example"""
     
     overlap = set(output).intersection(set(known_set))

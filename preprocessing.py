@@ -1,8 +1,48 @@
 
 import os
+import re
+from tqdm import tqdm
 
 import xml.etree.ElementTree as ET
 from nltk.tokenize import word_tokenize
+
+
+def preprocess_dataset(texts: list[str], entity_lists: list[list[str]]):
+    """ turn text into list of dictionaries extracted features """
+    
+    features = []
+    labels = []
+    
+    for text, entities in zip(texts, entity_lists):
+        tokens = word_tokenize(text)
+        
+        label_list = ["O"] * len(tokens)
+
+        # Mark the entities in the label list
+        for entity in entities:
+            entity_tokens = word_tokenize(entity)
+            pattern = r'\b' + r'\s+'.join(re.escape(token) for token in entity_tokens) + r'\b'
+            for match in re.finditer(pattern, text):
+                start, end = match.span()
+                start_index = len(re.findall(r'\S+', text[:start]))
+                end_index = start_index + len(entity_tokens)
+
+                label_list[start_index] = "B-ENTITY"
+                for i in range(start_index + 1, end_index):
+                    label_list[i] = "I-ENTITY"
+        
+        labels.extend(label_list)
+        for tk in tokens:
+            features.append(
+                {
+                    'word': tk,
+                    'is_capitalized': int(tk[0].isupper()),
+                    'length': len(tk),
+                }   
+            )
+
+    return features, labels
+    
 
 def get_tac(dataset="train"):
     """ returns X, Y for training set """
@@ -18,8 +58,12 @@ def get_tac(dataset="train"):
     
     return X, mentions_list, reactions_list
 
+
+
 def get_tac_recognition_test():
     raise NotImplementedError
+
+
     
 def parse_xml_file(fp: str) -> tuple[str, str, list[str], list[dict[str, str]]]:
     """ returns name, text, mentions, and final reactions (labels) for a drug's XML file passed in as fp"""
@@ -40,18 +84,3 @@ def parse_xml_file(fp: str) -> tuple[str, str, list[str], list[dict[str, str]]]:
         )
     
     return root.get("drug"), text, mentions, reactions
-
-
-# def process_plain_text(text: list[str]) -> str:
-#     data = ""
-#     for t in text:
-#         data += word_tokenize(t)
-#     return data
-
-
-if __name__=="__main__":
-    name, text, mentions, reactions = parse_tac_xml("data/tac_2017/train/train_xml/ADCETRIS.xml")
-    
-    # print(process_plain_text(text))
-    
-    
