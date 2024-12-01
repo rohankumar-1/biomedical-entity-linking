@@ -1,11 +1,141 @@
 
 import os
 import re
-from tqdm import tqdm
-
 import xml.etree.ElementTree as ET
+
 from nltk.tokenize import word_tokenize
 
+
+def ner_get_preprocessed_data(dataset="train"):
+    """ 
+    Returns parsed, cleaned dataset as list of sentences across all drugs, and also returns IOB taglines for each sentence
+    """
+    
+    files = os.listdir(f"data/tac_2017/{dataset}/")
+    sentset = []
+    tagset = []
+    
+    for fp in files:
+        _, texts, mentions, _ = parse_xml_file(f"data/tac_2017/{dataset}/{fp}")
+        cleaned_texts = clean_text(texts)
+        full_text, tags = build_iob_map(cleaned_texts, mentions)
+        sentset.extend(full_text)
+        tagset.extend(tags)
+    
+    return sentset, tagset
+
+
+
+def parse_xml_file(fp: str) -> tuple[str, list[dict[str, str]], list[dict[str, str]], list[dict[str, str]]]:
+    """ returns name, text, mentions, and final reactions (labels) for a drug's XML file passed in as fp"""
+    root = ET.parse(fp).getroot()
+    texts = [{"text": tt.text,
+              "section": tt.get("id")} for tt in root.findall("./Text/Section")]
+    mentions = [{"str": tt.get("str"), 
+                 "section": tt.get("section"),
+                 "type": tt.get("type"),
+                 "len": tt.get("len")} for tt in root.findall("./Mentions/Mention")]
+    
+    reactions = list()
+    for tag_type in root.findall("./Reactions/Reaction"):
+        norm = tag_type.find("Normalization")
+        reactions.append(
+            {
+                "name": tag_type.get("str"),
+                "id": norm.get("id"),
+                "meddra_pt": norm.get("meddra_pt"),
+                "meddra_pt_id": norm.get("meddra_pt_id")
+            }
+        )
+    
+    return root.get("drug"), texts, mentions, reactions
+
+def clean_text(texts: list[dict[str, str]]) -> list[dict[str, list[list[str]]]]:
+    """ convert each text into a list of lists of sentences -> words"""
+    result = []
+    for section in texts:
+        cleaned_section = {"section": section["section"], "sentences": []}
+        for line in section["text"].split("\n"):
+            if len(line)>2:
+                cleaned_section["sentences"].append(
+                    [word for word in line.split() if word not in ["", "*", "-"]]
+                )
+
+        result.append(cleaned_section)
+            
+    return result
+
+
+def build_iob_map(texts, mentions):
+
+    full_text, tags = [], []
+    # looping through each section
+    for i, section in enumerate(texts):
+
+        # get all mentions in the current section
+        idx = f"S{i+1}"
+        relevant_mentions = {m["str"]: m["type"] for m in mentions if m["section"]==idx}
+
+        for term, type in relevant_mentions.items():
+            full_types = []
+            for i, word in enumerate(term.split()):
+                if i==0:
+                    full_types.append(f"B-{type}")
+                else:
+                    full_types.append(f"I-{type}")
+
+            relevant_mentions[term] = " ".join(full_types)
+        
+        # loop through each mention, and for that mention, tag the word as B-TYPE, I-TYPE, etc
+        for line in section["sentences"]:
+            full_line = " ".join(line)
+            tag_line = full_line
+            for term, type in relevant_mentions.items():
+                # assert isinstance(term, str)
+                # assert isinstance(type, str)
+    
+                # build regex patterns
+                pattern = "{term}[ ,:;]".format(
+                    term=re.escape(term)
+                    )
+                
+                repl = "{type} ".format(
+                    type=type
+                    )
+                
+                # replace 
+                try:
+                    tag_line = re.sub(pattern=pattern, repl=repl, string=tag_line, count=10) # tag_line.replace(term+" ", type+" ")
+                except Exception as e:
+                    print(pattern)
+                    print(e)
+                    
+                # print(tag_line)
+            if len(full_line) != 0:
+                full_text.append(full_line.split())
+                tags.append(tag_line.split())
+
+    for i in range(len(tags)):
+        for j in range(len(tags[i])):
+            if not tags[i][j].startswith(("B-", "I-")):
+                tags[i][j] = "O"
+            
+    # we want to return a full concatenated text, and a full list of tags, one tag for each word in the text
+    return full_text, tags
+            
+
+
+
+
+
+
+
+
+###########################################################
+##
+##         Functions for baseline model below
+##
+###########################################################
 
 def preprocess_dataset(texts: list[str], entity_lists: list[list[str]]):
     """ turn text into list of dictionaries extracted features """
@@ -51,7 +181,7 @@ def get_tac(dataset="train"):
     X, mentions_list, reactions_list = [], [], []
     
     for fp in files:
-        _, text, mentions, reactions = parse_xml_file(f"data/tac_2017/{dataset}/{fp}")
+        _, text, mentions, reactions = parse_xml_file_baseline(f"data/tac_2017/{dataset}/{fp}")
         X.append(text)
         mentions_list.append(mentions)
         reactions_list.append(reactions)
@@ -65,7 +195,7 @@ def get_tac_recognition_test():
 
 
     
-def parse_xml_file(fp: str) -> tuple[str, str, list[str], list[dict[str, str]]]:
+def parse_xml_file_baseline(fp: str) -> tuple[str, str, list[str], list[dict[str, str]]]:
     """ returns name, text, mentions, and final reactions (labels) for a drug's XML file passed in as fp"""
     root = ET.parse(fp).getroot()
     text = "\n".join([tt.text for tt in root.findall("./Text/Section")])

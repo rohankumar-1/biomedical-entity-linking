@@ -2,6 +2,10 @@
 import pandas as pd
 import numpy as np
 
+START_TOKEN = "<START>"
+STOP_TOKEN = "<STOP>"
+UNK_TOKEN = "<UNK>"
+
 
 def load_meddra() -> dict[str, str]:
     """ loads the meddra knowledge base, then returns a dict from term ID to term NAME """

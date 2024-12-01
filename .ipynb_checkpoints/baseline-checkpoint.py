@@ -4,7 +4,7 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.naive_bayes import GaussianNB
 from tqdm import tqdm
 
-from evaluation.evaluation import evaluate_f1
+from evaluation import evaluate_f1
 from preprocessing import get_tac, preprocess_dataset
 from utils import iob_to_entities, load_meddra
 
