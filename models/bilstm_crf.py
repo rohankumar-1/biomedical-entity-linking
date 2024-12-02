@@ -2,9 +2,10 @@
 
 import torch
 import torch.nn as nn
+import numpy as np
 
-from gensim.models import Word2Vec
-# from gensim.test.utils import 
+import fasttext
+# model = 
 from utils.utils import START_TOKEN, STOP_TOKEN, UNK_TOKEN
 
 torch.manual_seed(1)
@@ -35,8 +36,20 @@ class BiLSTM_CRF(nn.Module):
         
         self.w2v = word2vec_embeds
         if self.w2v:
-            self.word_embeds = None
+            print("Using word2vec-style embedding model...")
+            self.biow2v = fasttext.load_model("pretrained/BioWordVec_PubMed_MIMICIII_d200.bin")
+            
+            print("Loaded embedding model.")
+            def embed(seq):
+                embed_seq = np.array([], dtype=np.float64)
+                for s in seq:
+                    embed_seq = np.concatenate([embed_seq, self.biow2v[s]], axis=0)
+                    
+                return torch.tensor(embed_seq, dtype=torch.float32)
+            
+            self.word_embeds = embed
         else:
+            print("Using embedding layer...")
             self.word_embeds = nn.Embedding(self.vocab_size, embedding_dim)
             
         self.lstm = nn.LSTM(embedding_dim, hidden_dim // 2, num_layers=1, bidirectional=True)
@@ -101,7 +114,7 @@ class BiLSTM_CRF(nn.Module):
             sentence = self._prepare_sequence(seq=sentence)
             
         embeds = self.word_embeds(sentence).view(len(sentence), 1, -1)
-            
+        
         lstm_out, self.hidden = self.lstm(embeds, self.hidden)
         lstm_out = lstm_out.view(len(sentence), self.hidden_dim)
         lstm_feats = self.hidden2tag(lstm_out)
@@ -157,7 +170,6 @@ class BiLSTM_CRF(nn.Module):
         return path_score, best_path
 
     def neg_log_likelihood(self, sentence, tags):
-            
         feats = self._get_lstm_features(sentence)
         forward_score = self._forward_alg(feats)
         gold_score = self._score_sentence(feats, tags)

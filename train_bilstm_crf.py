@@ -31,7 +31,10 @@ def train_bilstm_crf(model, train_data: BiLSTM_CRF_Dataset, epochs=1):
     
     # optimizer = optim.SGD(model.parameters(), lr=0.01, weight_decay=1e-4)
     optimizer = optim.AdamW(model.parameters())
-
+    print("#################################################")
+    print("# Starting training ...")
+    print("#################################################")
+    
     # Make sure prepare_sequence from earlier in the LSTM section is loaded
     for epoch in range(epochs):  # again, normally you would NOT do 300 epochs, it is toy data
         for sentence, tags in tqdm(train_data.iterate(), desc=f"Epoch {epoch}: ", total=len(train_data.data)):
@@ -44,6 +47,8 @@ def train_bilstm_crf(model, train_data: BiLSTM_CRF_Dataset, epochs=1):
 
             loss.backward()
             optimizer.step()
+            
+    print("#################################################")
     
     return model
 
@@ -59,11 +64,14 @@ if __name__=="__main__":
     train_data = BiLSTM_CRF_Dataset("train")
     test_data = BiLSTM_CRF_Dataset("test")
     
-    EMBEDDING_DIM = 64
+    EMBEDDING_DIM = 200
     HIDDEN_DIM    = 64
     
-    model = BiLSTM_CRF(train_data.tag_to_idx, train_data.word_to_idx, EMBEDDING_DIM, HIDDEN_DIM, word2vec_embeds=False)
-    model = train_bilstm_crf(model, train_data, epochs=5)
+    print("#################################################")
+    print("# Building model ...  ")
+    print("#################################################")
+    model = BiLSTM_CRF(train_data.tag_to_idx, train_data.word_to_idx, EMBEDDING_DIM, HIDDEN_DIM, word2vec_embeds=True)
+    model = train_bilstm_crf(model, train_data, epochs=1)
     
     # Check predictions after training
     test_and_write(model, test_data, TRAINED_OUTFILE)
