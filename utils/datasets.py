@@ -53,8 +53,8 @@ class BiLSTM_CRF_Dataset:
                     self.word_to_idx[word] = len(self.word_to_idx)
                     
     def iterate(self):
-        """ a generator function for the data """
-        for sentence, tagline in zip(self.data[:100], self.tags[:100]):
+        """ a generator function for the data (RANDOMIZED) """
+        for sentence, tagline in zip(self.data, self.tags):
             yield (sentence, tagline)
                     
         

@@ -8,7 +8,8 @@ from utils import BiLSTM_CRF_Dataset
 from evaluation import evaluate
 
 
-def test_and_write(model, test_data: BiLSTM_CRF_Dataset, outfile: str):
+
+def test_and_write(mdl, test_data: BiLSTM_CRF_Dataset, outfile: str):
     
     true_tags = []
     pred_tags = []
@@ -16,8 +17,8 @@ def test_and_write(model, test_data: BiLSTM_CRF_Dataset, outfile: str):
     with torch.no_grad():
         for sentence, tags in tqdm(test_data.iterate(), desc="Testing... ", total=len(test_data.data)):
             targets = [train_data.tag_to_idx[t] for t in tags]
-            
-            preds = model(sentence)[1]
+        
+            preds = mdl(sentence)[1]
             
             pred_tags.extend([test_data.idx_to_tag[p] for p in preds])
             true_tags.extend([test_data.idx_to_tag[t] for t in targets])
@@ -62,7 +63,7 @@ if __name__=="__main__":
     HIDDEN_DIM    = 64
     
     model = BiLSTM_CRF(train_data.tag_to_idx, train_data.word_to_idx, EMBEDDING_DIM, HIDDEN_DIM, word2vec_embeds=False)
-    model = train_bilstm_crf(model, train_data, epochs=1)
+    model = train_bilstm_crf(model, train_data, epochs=5)
     
     # Check predictions after training
     test_and_write(model, test_data, TRAINED_OUTFILE)

@@ -96,6 +96,10 @@ class BiLSTM_CRF(nn.Module):
 
     def _get_lstm_features(self, sentence):
         self.hidden = self.init_hidden()
+        
+        if self.w2v is False:
+            sentence = self._prepare_sequence(seq=sentence)
+            
         embeds = self.word_embeds(sentence).view(len(sentence), 1, -1)
             
         lstm_out, self.hidden = self.lstm(embeds, self.hidden)
@@ -153,9 +157,6 @@ class BiLSTM_CRF(nn.Module):
         return path_score, best_path
 
     def neg_log_likelihood(self, sentence, tags):
-        
-        if not self.w2v:
-            sentence = self._prepare_sequence(seq=sentence)
             
         feats = self._get_lstm_features(sentence)
         forward_score = self._forward_alg(feats)
