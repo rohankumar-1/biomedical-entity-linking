@@ -5,6 +5,8 @@ import xml.etree.ElementTree as ET
 
 from nltk.tokenize import word_tokenize
 
+BTAG = "B--"
+ITAG = "I--"
 
 def ner_get_preprocessed_data(dataset="train"):
     """ 
@@ -53,12 +55,17 @@ def parse_xml_file(fp: str) -> tuple[str, list[dict[str, str]], list[dict[str, s
 def clean_text(texts: list[dict[str, str]]) -> list[dict[str, list[list[str]]]]:
     """ convert each text into a list of lists of sentences -> words"""
     result = []
+    
+    def bioclean(t):
+        return re.sub("[.,?;*!%^&_+():-\\[\\]{}]", "", t.replace('"', "").replace("/", "").replace("\\", "").replace("'", "").strip().lower()).split()
+    
     for section in texts:
         cleaned_section = {"section": section["section"], "sentences": []}
         for line in section["text"].split("\n"):
             if len(line)>2:
+                line = bioclean(line)
                 cleaned_section["sentences"].append(
-                    [word for word in line.split() if word not in ["", "*", "-"]]
+                    line
                 )
 
         result.append(cleaned_section)
@@ -67,7 +74,7 @@ def clean_text(texts: list[dict[str, str]]) -> list[dict[str, list[list[str]]]]:
 
 
 def build_iob_map(texts, mentions):
-
+    """ given texts and mentions, create IOB formatted info """
     full_text, tags = [], []
     # looping through each section
     for i, section in enumerate(texts):
@@ -80,9 +87,9 @@ def build_iob_map(texts, mentions):
             full_types = []
             for i, word in enumerate(term.split()):
                 if i==0:
-                    full_types.append(f"B-{type}")
+                    full_types.append(f"{BTAG}{type}")
                 else:
-                    full_types.append(f"I-{type}")
+                    full_types.append(f"{ITAG}{type}")
 
             relevant_mentions[term] = " ".join(full_types)
         
@@ -104,12 +111,7 @@ def build_iob_map(texts, mentions):
                     )
                 
                 # replace 
-                try:
-                    tag_line = re.sub(pattern=pattern, repl=repl, string=tag_line, count=10) # tag_line.replace(term+" ", type+" ")
-                except Exception as e:
-                    print(pattern)
-                    print(e)
-                    
+                tag_line = re.sub(pattern=pattern, repl=repl, string=tag_line, count=10) # tag_line.replace(term+" ", type+" ")
                 # print(tag_line)
             if len(full_line) != 0:
                 full_text.append(full_line.split())
@@ -117,14 +119,12 @@ def build_iob_map(texts, mentions):
 
     for i in range(len(tags)):
         for j in range(len(tags[i])):
-            if not tags[i][j].startswith(("B-", "I-")):
+            if not tags[i][j].startswith((BTAG, ITAG)):
                 tags[i][j] = "O"
             
     # we want to return a full concatenated text, and a full list of tags, one tag for each word in the text
     return full_text, tags
             
-
-
 
 
 
@@ -157,9 +157,9 @@ def preprocess_dataset(texts: list[str], entity_lists: list[list[str]]):
                 start_index = len(re.findall(r'\S+', text[:start]))
                 end_index = start_index + len(entity_tokens)
 
-                label_list[start_index] = "B-ENTITY"
+                label_list[start_index] = f"{BTAG}ENTITY"
                 for i in range(start_index + 1, end_index):
-                    label_list[i] = "I-ENTITY"
+                    label_list[i] = f"{ITAG}ENTITY"
         
         labels.extend(label_list)
         for tk in tokens:

@@ -1,6 +1,6 @@
 
 from .utils import START_TOKEN, STOP_TOKEN, UNK_TOKEN
-from .preprocessing import ner_get_preprocessed_data
+from .preprocessing import ner_get_preprocessed_data, BTAG, ITAG
 from typing import Mapping
 
 class BiLSTM_CRF_Dataset:
@@ -32,9 +32,9 @@ class BiLSTM_CRF_Dataset:
                 
                 # split tag into BIO and type, then for both B and I, add B-Type and I-Type
                 # print(tag.split("-"))
-                _, name = tuple(tag.split("-"))
+                _, name = tuple(tag.split("--"))
                 
-                candidates = ["B-"+name, "I-"+name]
+                candidates = [BTAG+name, ITAG+name]
                 for cand in candidates:
                     if cand not in self.tag_to_idx.keys():
                         self.tag_to_idx[cand] = len(self.tag_to_idx)
@@ -54,10 +54,8 @@ class BiLSTM_CRF_Dataset:
                     
     def iterate(self):
         """ a generator function for the data """
-        for sentence, tagline in zip(self.data, self.tags):
+        for sentence, tagline in zip(self.data[:100], self.tags[:100]):
             yield (sentence, tagline)
-                    
-        
                     
         
         

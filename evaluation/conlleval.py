@@ -35,7 +35,7 @@ def split_tag(chunk_tag):
     B-PER -> (B, PER)
     O -> (O, None)
     """
-    res = chunk_tag.split('-', maxsplit=1)
+    res = chunk_tag.split('--', maxsplit=1)
     if len(res)==1:
         return (res[0], None)
     return res
@@ -193,8 +193,7 @@ def get_result(correct_chunks, true_chunks, pred_chunks, correct_counts, true_co
     for t in chunk_types:
         prec, rec, f1 = calc_metrics(correct_chunks[t], pred_chunks[t], true_chunks[t])
         print("%17s: " %t , end='')
-        print("precision: %6.2f%%; recall: %6.2f%%; FB1: %6.2f" %
-                    (prec, rec, f1), end='')
+        print("precision: %6.2f%%; recall: %6.2f%%; FB1: %6.2f" % (prec, rec, f1), end='')
         print("  %d" % pred_chunks[t])
 
     return res
