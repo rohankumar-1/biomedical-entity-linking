@@ -27,6 +27,26 @@ def ner_get_preprocessed_data(dataset="train"):
     return sentset, tagset
 
 
+def disambig_get_preprocessed_data():
+    """ returns ALL drugs, as mentions and reactions """
+    
+    drugs = dict()
+    for dataset in ["train", "test"]:
+        dir = f"data/tac_2017/{dataset}"
+        files = os.listdir(dir)
+        for fp in files:
+            _, _, mentions, reactions = parse_xml_file(f"{dir}/{fp}")
+            
+            mention_lst = set([m["str"].lower() for m in mentions if m["type"]=="AdverseReaction"])
+            reaction_lst = set([r["meddra_pt_id"] for r in reactions])
+            
+            drugs[fp.removesuffix(".xml")] = dict()
+            drugs[fp.removesuffix(".xml")]["mentions"] = list(mention_lst)
+            drugs[fp.removesuffix(".xml")]["reactions"] = list(reaction_lst)
+    
+    return drugs
+
+
 
 def parse_xml_file(fp: str) -> tuple[str, list[dict[str, str]], list[dict[str, str]], list[dict[str, str]]]:
     """ returns name, text, mentions, and final reactions (labels) for a drug's XML file passed in as fp"""

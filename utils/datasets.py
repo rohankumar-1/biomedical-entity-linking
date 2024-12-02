@@ -1,7 +1,8 @@
 
-from .utils import START_TOKEN, STOP_TOKEN, UNK_TOKEN
-from .preprocessing import ner_get_preprocessed_data, BTAG, ITAG
+from .utils import START_TOKEN, STOP_TOKEN, UNK_TOKEN, load_meddra_id2name
+from .preprocessing import ner_get_preprocessed_data, disambig_get_preprocessed_data, BTAG, ITAG
 from typing import Mapping
+import random
 
 class BiLSTM_CRF_Dataset:
     
@@ -54,12 +55,28 @@ class BiLSTM_CRF_Dataset:
                     
     def iterate(self):
         """ a generator function for the data (RANDOMIZED) """
-        for sentence, tagline in zip(self.data, self.tags):
+        
+        all_data = list(zip(self.data, self.tags))
+        random.shuffle(all_data)
+        
+        for sentence, tagline in all_data:
             yield (sentence, tagline)
                     
         
         
-if __name__=="__main__":
-    td = BiLSTM_CRF_Dataset("train")
-    print(td.tag_to_idx)
-    print(td.word_to_idx)
+class DisambiguationDataset:
+    
+    def __init__(self):
+        self.all_drugs = disambig_get_preprocessed_data()
+        self.keys = list(self.all_drugs.keys())
+        random.shuffle(self.keys)
+        
+    def iterate(self):
+        """ a generator function for the data """
+        for drug in self.keys:
+            yield (drug, self.all_drugs[drug])
+        
+        
+        
+        
+        

@@ -10,7 +10,13 @@ UNK_TOKEN = "<UNK>"
 def load_meddra() -> dict[str, str]:
     """ loads the meddra knowledge base, then returns a dict from term ID to term NAME """
     df = pd.read_excel("data/MEDDRA.xlsx", sheet_name="_ID2NAME")
-    return {row["Number"]: row["Name"] for _, row in df.iterrows()}
+    return {row["Number"]: row["Name"].lower() for _, row in df.iterrows()}
+    
+    
+def load_meddra_id2name() -> dict[str, str]:
+    """ loads the meddra knowledge base, then returns a dict from term ID to term NAME """
+    df = pd.read_excel("data/MEDDRA.xlsx", sheet_name="_ID2NAME")
+    return {int(row["Number"]): row["Name"].lower() for _, row in df.iterrows()}
     
 
 def levenshtein(word: str, candidate: str) -> int:
@@ -61,3 +67,12 @@ def iob_to_entities(tokens, predictions):
         entities.append((' '.join(current_entity), current_label))
 
     return entities
+
+
+def write_results(outfile, sentences, true_tags, pred_tags):
+    
+    with open(outfile, "r") as f:
+        for sen, true, pred in zip(sentences, true_tags, pred_tags):
+            print("this", file=f)
+        
+    return 

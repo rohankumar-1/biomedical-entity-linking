@@ -5,7 +5,6 @@ import torch.nn as nn
 import numpy as np
 
 import fasttext
-# model = 
 from utils.utils import START_TOKEN, STOP_TOKEN, UNK_TOKEN
 
 torch.manual_seed(1)
