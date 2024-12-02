@@ -1,6 +1,6 @@
 
-from utils import START_TOKEN, STOP_TOKEN, UNK_TOKEN
-from preprocessing import ner_get_preprocessed_data
+from .utils import START_TOKEN, STOP_TOKEN, UNK_TOKEN
+from .preprocessing import ner_get_preprocessed_data
 from typing import Mapping
 
 class BiLSTM_CRF_Dataset:
@@ -23,17 +23,29 @@ class BiLSTM_CRF_Dataset:
         self.tag_to_idx[self.start_token] = 0
         self.tag_to_idx[self.stop_token] = 1
         self.tag_to_idx[self.unk_token] = 2
+        self.tag_to_idx['O'] = 3
         
         for tagline in self.tags:
             for tag in tagline:
-                if tag not in self.tag_to_idx.keys():
-                    self.tag_to_idx[tag] = len(self.tag_to_idx)
+                if tag == 'O':
+                    continue
+                
+                # split tag into BIO and type, then for both B and I, add B-Type and I-Type
+                # print(tag.split("-"))
+                _, name = tuple(tag.split("-"))
+                
+                candidates = ["B-"+name, "I-"+name]
+                for cand in candidates:
+                    if cand not in self.tag_to_idx.keys():
+                        self.tag_to_idx[cand] = len(self.tag_to_idx)
                     
         self.idx_to_tag = {v: k for k, v in self.tag_to_idx.items()}
                     
     
     def _get_vocab(self):
         self.word_to_idx : Mapping[str, int]= {}
+        
+        self.word_to_idx[UNK_TOKEN] = 0
         
         for sent in self.data:
             for word in sent:

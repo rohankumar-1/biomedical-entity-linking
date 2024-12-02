@@ -3,7 +3,7 @@
 import torch
 import torch.nn as nn
 
-from utils import START_TOKEN, STOP_TOKEN
+from utils.utils import START_TOKEN, STOP_TOKEN, UNK_TOKEN
 
 torch.manual_seed(1)
 
@@ -14,7 +14,13 @@ def argmax(vec):
 
 
 def prepare_sequence(seq, to_ix):
-    idxs = [to_ix[w] for w in seq]
+    """ adjusted for UNK_TOKEN when testing """
+    idxs = []
+    for w in seq:
+        if w in to_ix.keys():
+            idxs.append(to_ix[w])
+        else:
+            idxs.append(to_ix[UNK_TOKEN])
     return torch.tensor(idxs, dtype=torch.long)
 
 

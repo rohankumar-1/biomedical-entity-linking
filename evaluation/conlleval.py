@@ -26,8 +26,6 @@ prefix: IOBES
 chunk_type: PER, LOC, etc.
 """
 from __future__ import division, print_function, unicode_literals
-
-import sys
 from collections import defaultdict
 
 def split_tag(chunk_tag):
@@ -37,9 +35,10 @@ def split_tag(chunk_tag):
     B-PER -> (B, PER)
     O -> (O, None)
     """
-    if chunk_tag == 'O':
-        return ('O', None)
-    return chunk_tag.split('-', maxsplit=1)
+    res = chunk_tag.split('-', maxsplit=1)
+    if len(res)==1:
+        return (res[0], None)
+    return res
 
 def is_chunk_end(prev_tag, tag):
     """
@@ -126,7 +125,7 @@ def count_chunks(true_seqs, pred_seqs):
             correct_counts[true_tag] += 1
         true_counts[true_tag] += 1
         pred_counts[pred_tag] += 1
-
+        
         _, true_type = split_tag(true_tag)
         _, pred_type = split_tag(pred_tag)
 
@@ -157,8 +156,7 @@ def count_chunks(true_seqs, pred_seqs):
     return (correct_chunks, true_chunks, pred_chunks, 
         correct_counts, true_counts, pred_counts)
 
-def get_result(correct_chunks, true_chunks, pred_chunks,
-    correct_counts, true_counts, pred_counts, verbose=True):
+def get_result(correct_chunks, true_chunks, pred_chunks, correct_counts, true_counts, pred_counts, verbose=True):
     """
     if verbose, print overall performance, as well as preformance per chunk type;
     otherwise, simply return overall prec, rec, f1 scores
@@ -174,7 +172,7 @@ def get_result(correct_chunks, true_chunks, pred_chunks,
     nonO_correct_counts = sum(v for k, v in correct_counts.items() if k != 'O')
     nonO_true_counts = sum(v for k, v in true_counts.items() if k != 'O')
 
-    chunk_types = sorted(list(set(list(true_chunks) + list(pred_chunks))))
+    chunk_types = list(set(list(true_chunks) + list(pred_chunks)))
 
     # compute overall precision, recall and FB1 (default values are 0.0)
     prec, rec, f1 = calc_metrics(sum_correct_chunks, sum_pred_chunks, sum_true_chunks)
@@ -200,36 +198,8 @@ def get_result(correct_chunks, true_chunks, pred_chunks,
         print("  %d" % pred_chunks[t])
 
     return res
-    # you can generate LaTeX output for tables like in
-    # http://cnts.uia.ac.be/conll2003/ner/example.tex
-    # but I'm not implementing this
 
 def evaluate(true_seqs, pred_seqs, verbose=True):
-    (correct_chunks, true_chunks, pred_chunks,
-        correct_counts, true_counts, pred_counts) = count_chunks(true_seqs, pred_seqs)
-    result = get_result(correct_chunks, true_chunks, pred_chunks,
-        correct_counts, true_counts, pred_counts, verbose=verbose)
+    correct_chunks, true_chunks, pred_chunks, correct_counts, true_counts, pred_counts = count_chunks(true_seqs, pred_seqs)
+    result = get_result(correct_chunks, true_chunks, pred_chunks, correct_counts, true_counts, pred_counts, verbose=verbose)
     return result
-
-def evaluate_conll_file(fileIterator):
-    true_seqs, pred_seqs = [], []
-    
-    for line in fileIterator:
-        cols = line.strip().split()
-        # each non-empty line must contain >= 3 columns
-        if not cols:
-            true_seqs.append('O')
-            pred_seqs.append('O')
-        elif len(cols) < 3:
-            raise IOError("conlleval: too few columns in line %s\n" % line)
-        else:
-            # extract tags from last 2 columns
-            true_seqs.append(cols[-2])
-            pred_seqs.append(cols[-1])
-    return evaluate(true_seqs, pred_seqs)
-
-if __name__ == '__main__':
-    """
-    usage:     conlleval < file
-    """
-    evaluate_conll_file(sys.stdin)

@@ -4,7 +4,7 @@ import torch.optim as optim
 import torch
 from tqdm import tqdm
 
-from datasets import BiLSTM_CRF_Dataset
+from utils import BiLSTM_CRF_Dataset
 from evaluation import evaluate
 
 
