@@ -3,12 +3,15 @@ from utils.utils import load_meddra_id2name
 from gensim.models import KeyedVectors
 import fasttext
 
+from nltk import word_tokenize
+from nltk.stem.snowball import EnglishStemmer
+
+stemmer = EnglishStemmer()
 
 class DisambigModel:
     
     def __init__(self):
         self.meddra = load_meddra_id2name()
-        self.meddra_term2id = {v: k for k,v in self.meddra.items()}
 
         self.model = fasttext.load_model("pretrained/BioWordVec_PubMed_MIMICIII_d200.bin")
         self.kv = self._generate_kv()
@@ -40,7 +43,7 @@ class DisambigModel:
 
 
 
-class DisambigModel:
+class DisambigRuleModel:
     
     def __init__(self):
         self.meddra = load_meddra_id2name()
@@ -49,10 +52,17 @@ class DisambigModel:
         self.model = fasttext.load_model("pretrained/BioWordVec_PubMed_MIMICIII_d200.bin")
         self.kv = self._generate_kv()
         
+    def _preprocess(self, term: str):
+        term = term.replace("'", "").replace("\"","").replace(",", "").replace("`", "").replace(";", "")
+        return " ".join(sorted([stemmer.stem(w) for w in word_tokenize(term)]))
+        
     def _generate_kv(self):
         ids, embeds = [], []
+        
         for id, term in self.meddra.items():
-            embeds.append(self.model.get_sentence_vector(term))
+            clean_term = self._preprocess(term)
+            # print(clean_term)
+            embeds.append(self.model.get_word_vector(clean_term))
             # print(term, id, embeds[-1].shape)
             ids.append(id)
             
@@ -65,7 +75,9 @@ class DisambigModel:
         matches = []
         # assert type(self.kv) is KeyedVectors
         for term in terms:
-            embed = self.model.get_sentence_vector(term)
+            clean_term = self._preprocess(term)
+            # print(clean_term)
+            embed = self.model.get_word_vector(clean_term)
             matches.append(
                 self.kv.most_similar(positive=[embed], topn=1)[0][0]
                 )

@@ -39,7 +39,7 @@ if __name__=="__main__":
     true_reactions = dict()
     pred_reactions = dict()
     
-    STOP, curr = 5, 0
+    STOP, curr = 30, 0
     
     for name, data in dd.iterate():
         
