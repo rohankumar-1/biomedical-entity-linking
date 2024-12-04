@@ -4,7 +4,7 @@ from .preprocessing import ner_get_preprocessed_data, disambig_get_preprocessed_
 from typing import Mapping
 import random
 
-class BiLSTM_CRF_Dataset:
+class IOBDataset:
     
     def __init__(self, dataset:str="train"):
         self.start_token : str = START_TOKEN

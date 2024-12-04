@@ -1,4 +1,4 @@
 
-from .datasets import BiLSTM_CRF_Dataset, DisambiguationDataset
+from .datasets import IOBDataset, DisambiguationDataset
 from .preprocessing import *
 from .utils import *
