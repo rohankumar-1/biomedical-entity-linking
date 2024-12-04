@@ -66,13 +66,13 @@ if __name__=="__main__":
     test_data = BiLSTM_CRF_Dataset("test")
     
     EMBEDDING_DIM = 200
-    HIDDEN_DIM    = 86
+    HIDDEN_DIM    = 128
     
     print("#################################################")
     print("# Building model ...  ")
     print("#################################################")
     model = BiLSTM_CRF(train_data.tag_to_idx, train_data.word_to_idx, EMBEDDING_DIM, HIDDEN_DIM, word2vec_embeds=True)
-    model = train_bilstm_crf(model, train_data, epochs=5)
+    model = train_bilstm_crf(model, train_data, epochs=15)
     
     # Check predictions after training
     test_and_write(model, test_data, TRAINED_OUTFILE)
