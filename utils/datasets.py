@@ -1,6 +1,6 @@
 
 from .utils import START_TOKEN, STOP_TOKEN, UNK_TOKEN, load_meddra_id2name
-from .preprocessing import ner_get_preprocessed_data, disambig_get_preprocessed_data, BTAG, ITAG
+from .preprocessing import ner_get_preprocessed_data, disambig_get_preprocessed_data, e2e_get_preprocessed_data, BTAG, ITAG
 from typing import Mapping
 import random
 
@@ -80,3 +80,14 @@ class DisambiguationDataset:
         
         
         
+        
+class E2EDataset:
+    
+    def __init__(self):
+        self.sentset, self.tagset, self.reactions = e2e_get_preprocessed_data()
+        self.keys = list(self.sentset.keys())
+        random.shuffle(self.keys)
+        
+    def iterate(self):
+        for drug in self.keys:
+            yield (drug, self.sentset[drug], self.tagset[drug], self.reactions[drug])

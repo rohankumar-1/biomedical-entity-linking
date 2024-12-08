@@ -5,20 +5,6 @@ from evaluation import evaluation_report
 import editdistance
 
 
-def find_matches(term_list, vocab: dict[int, str]):
-    """ for each word in the word_list, return the closest match (ID) of vocab using Levenshtein distance """
-    matches = []
-    for term in term_list:
-        closest, closestDist = None, 1e5
-        for id, word in vocab.items():
-            dist = editdistance.eval(term, word)
-            if dist < closestDist:
-                closest = id
-                closestDist = dist
-                
-        matches.append(closest)
-    
-    return matches
 
 
 if __name__=="__main__":
