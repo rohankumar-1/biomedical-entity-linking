@@ -1,4 +1,4 @@
-# Author: Robert Guthrie
+# Implementation based on Robert Guthrie's https://pytorch.org/tutorials/beginner/nlp/advanced_tutorial.html
 
 import torch
 import torch.nn as nn
