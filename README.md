@@ -2,7 +2,7 @@
 # Information on Project
 
 
-![](CS505_Poster__NEW_.pdf)
+![](CS505_Poster__NEW__page-0001.jpg)
 
 
 ## For Instructors
