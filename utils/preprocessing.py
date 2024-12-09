@@ -27,22 +27,42 @@ def ner_get_preprocessed_data(dataset="train"):
     return sentset, tagset
 
 
+def e2e_get_preprocessed_data():
+    
+    dr = "data/tac_2017/test"
+    files = os.listdir(dr)
+    sentset = {}
+    reactionset = {}
+    tagset = {}
+    
+    for fp in files:
+        drug, texts, mentions, reactions = parse_xml_file(f"{dr}/{fp}")
+        
+        cleaned_texts = clean_text(texts)
+        full_text, tags = build_iob_map(cleaned_texts, mentions)
+        
+        sentset[drug] = full_text
+        tagset[drug] = tags
+        reactionset[drug] = list(set([r["meddra_pt_id"] for r in reactions]))
+        
+    return sentset, tagset, reactionset
+
 def disambig_get_preprocessed_data():
     """ returns ALL drugs, as mentions and reactions """
     
     drugs = dict()
     for dataset in ["train", "test"]:
-        dir = f"data/tac_2017/{dataset}"
-        files = os.listdir(dir)
+        dr = f"data/tac_2017/{dataset}"
+        files = os.listdir(dr)
         for fp in files:
-            _, _, mentions, reactions = parse_xml_file(f"{dir}/{fp}")
+            drug, _, mentions, reactions = parse_xml_file(f"{dr}/{fp}")
             
             mention_lst = set([m["str"].lower() for m in mentions if m["type"]=="AdverseReaction"])
             reaction_lst = set([r["meddra_pt_id"] for r in reactions])
             
-            drugs[fp.removesuffix(".xml")] = dict()
-            drugs[fp.removesuffix(".xml")]["mentions"] = list(mention_lst)
-            drugs[fp.removesuffix(".xml")]["reactions"] = list(reaction_lst)
+            drugs[drug] = dict()
+            drugs[drug]["mentions"] = list(mention_lst)
+            drugs[drug]["reactions"] = list(reaction_lst)
     
     return drugs
 
